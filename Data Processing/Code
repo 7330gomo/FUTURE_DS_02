@@ -1,0 +1,913 @@
+---Viewing all values in the dataset
+select*
+from customer.subscription.churn_analysis;
+
+--------------------------------------------------------------------EXPLORATORY DATA ANALYSIS
+
+----1.user_id
+select*
+from customer.subscription.churn_analysis;
+
+--------------------------------------------------------------------
+
+----2.signup_date
+
+---extract monthname and year from our signup_date
+select monthname(signup_date) as signup_month,
+year(signup_date) as signup_year
+from customer.subscription.churn_analysis;
+
+---checking null values
+select signup_date
+from customer.subscription.churn_analysis
+where signup_date is null;
+
+-------------------------------------------------------------------
+
+----3.plan_type
+
+---to the different plans in the dataset(Basic,standard,premium)
+select distinct(plan_type) as different_plan
+from customer.subscription.churn_analysis;
+
+---------------------------------------------------------------------
+
+----4.monthly_fee
+
+--to see the different monthly fees
+select distinct(monthly_fee) as different_monthly_fee
+from customer.subscription.churn_analysis;
+
+---to check for null values
+select monthly_fee
+from customer.subscription.churn_analysis
+where monthly_fee is null;
+
+
+-----------------------------------------------------------------------
+
+----5.avg_weekly_usage_hours
+
+---to see the distinct avg_weekly_usage_hours
+select distinct(avg_weekly_usage_hours) as different_avg_weekly_usage_hours
+from customer.subscription.churn_analysis;
+
+---to check for null values
+select avg_weekly_usage_hours
+from customer.subscription.churn_analysis
+where avg_weekly_usage_hours is null;
+
+
+------------------------------------------------------------------------
+
+----6.support_tickets
+select distinct(support_tickets) as different_support_tickets
+from customer.subscription.churn_analysis;
+
+----to check for null values
+select support_tickets
+from customer.subscription.churn_analysis
+where support_tickets is null;
+
+----------------------------------------------------------------------
+
+----7.payment_failures
+
+---the different times a user had payment failures
+select distinct(payment_failures) as different_payment_failures
+from customer.subscription.churn_analysis;
+
+---to check for null values
+select payment_failures
+from customer.subscription.churn_analysis
+where payment_failures is null;
+---------------------------------------------------------------------
+
+----8.tenure_months
+select distinct(tenure_months) as different_tenure_months
+from customer.subscription.churn_analysis;
+
+--to check for null values
+select tenure_months
+from customer.subscription.churn_analysis
+where tenure_months is null;
+
+--------------------------------------------------------------------------
+
+----9.last_login_days_ago
+select distinct(last_login_days_ago) as different_last_login_days_ago
+from customer.subscription.churn_analysis;
+
+---to check null values
+select last_login_days_ago
+from customer.subscription.churn_analysis
+where last_login_days_ago is null;
+--------------------------------------------------------------------------
+
+----10.churn
+
+----to see the different churn
+select distinct(churn) as different_churn
+from customer.subscription.churn_analysis;
+
+--to check for null values
+select churn
+from customer.subscription.churn_analysis
+where churn is null;
+---------------------------------------------------------------------------
+
+
+
+
+
+
+
+select count(*) as Total_customers,
+
+signup_date,
+monthname(signup_date) as signup_month,
+year(signup_date) as signup_year,
+plan_type,
+count(churn) OVER(PARTITION BY plan_type) churn_count_plans,
+monthly_fee,
+avg_weekly_usage_hours,
+count(churn) OVER(PARTITION BY avg_weekly_usage_hours) churn__count_usage,
+CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+END AS usage_category,
+support_tickets,
+count(churn) over(partition by support_tickets) AS churn_count_tickets,
+CASE 
+    WHEN support_tickets = 0 THEN '0 tickets'
+    WHEN support_tickets = 1 THEN '1 ticket'
+    WHEN support_tickets = 2 THEN '2 tickets'
+    WHEN support_tickets = 3 THEN '3 tickets'
+    WHEN support_tickets = 4 THEN '4 tickets'
+    WHEN support_tickets = 5 THEN '5 tickets'
+    WHEN support_tickets = 6 THEN '6 tickets'
+    WHEN support_tickets = 7 THEN '7 tickets'
+    WHEN support_tickets = 8 THEN '8 tickets'
+    ELSE '9+ tickets'
+END AS ticket_category,
+payment_failures,
+count(churn) over(partition by payment_failures) AS churn_count_paymentFailures,
+CASE 
+    WHEN payment_failures = 0 THEN 'No failures'
+    WHEN payment_failures = 1 THEN '1 failure'
+    WHEN payment_failures = 2 THEN '2 failures'
+    WHEN payment_failures = 3 THEN '3 failures'
+    WHEN payment_failures = 4 THEN '4 failures'
+    WHEN payment_failures = 5 THEN '5 failures'
+    WHEN payment_failures > 5 THEN '5+ failures'
+    ELSE 'Unknown'
+END AS payment_failure_category,
+tenure_months,
+CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END AS tenure_category,
+last_login_days_ago,
+CASE 
+    WHEN last_login_days_ago = 0 THEN 'Active today'
+    WHEN last_login_days_ago BETWEEN 1 AND 7 THEN 'Inactive (1-7 days)'
+    WHEN last_login_days_ago BETWEEN 8 AND 14 THEN 'inactive (8-14 days)'
+    WHEN last_login_days_ago BETWEEN 15 AND 30 THEN 'Inactive (15-30 days)'
+    WHEN last_login_days_ago BETWEEN 31 AND 60 THEN 'Inactive (31-60 days)'
+    WHEN last_login_days_ago > 60 THEN 'Churn risk (60+ days)'
+    ELSE 'Unknown'
+END AS login_recency_category,
+churn,
+
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned_customers,
+
+SUM(CASE WHEN churn = 'No' THEN 1 ELSE 0 END) AS retained_customers,
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)/COUNT(*)  AS churn_rate,
+SUM(CASE WHEN churn = 'No' THEN 1 ELSE 0 END)/COUNT(*)  AS retention_rate
+
+
+from customer.subscription.churn_analysis
+group by signup_date,plan_type,monthly_fee,  avg_weekly_usage_hours, support_tickets, payment_failures, tenure_months, last_login_days_ago,churn ;
+
+
+
+
+SELECT
+    plan_type,
+    payment_failures,
+    CASE 
+    WHEN payment_failures = 0 THEN 'No failures'
+    WHEN payment_failures = 1 THEN '1 failure'
+    WHEN payment_failures = 2 THEN '2 failures'
+    WHEN payment_failures = 3 THEN '3 failures'
+    WHEN payment_failures = 4 THEN '4 failures'
+    WHEN payment_failures = 5 THEN '5 failures'
+    WHEN payment_failures > 5 THEN '5+ failures'
+    ELSE 'Unknown'
+END AS payment_failure_category,
+    avg_weekly_usage_hours,
+    CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+END AS usage_category,
+    support_tickets,
+    CASE 
+    WHEN support_tickets = 0 THEN '0 tickets'
+    WHEN support_tickets = 1 THEN '1 ticket'
+    WHEN support_tickets = 2 THEN '2 tickets'
+    WHEN support_tickets = 3 THEN '3 tickets'
+    WHEN support_tickets = 4 THEN '4 tickets'
+    WHEN support_tickets = 5 THEN '5 tickets'
+    WHEN support_tickets = 6 THEN '6 tickets'
+    WHEN support_tickets = 7 THEN '7 tickets'
+    WHEN support_tickets = 8 THEN '8 tickets'
+    ELSE '9+ tickets'
+END AS ticket_category,
+last_login_days_ago,
+CASE 
+    WHEN last_login_days_ago = 0 THEN 'Active today'
+    WHEN last_login_days_ago BETWEEN 1 AND 7 THEN 'Inactive (1-7 days)'
+    WHEN last_login_days_ago BETWEEN 8 AND 14 THEN 'inactive (8-14 days)'
+    WHEN last_login_days_ago BETWEEN 15 AND 30 THEN 'Inactive (15-30 days)'
+    WHEN last_login_days_ago BETWEEN 31 AND 60 THEN 'Inactive (31-60 days)'
+    WHEN last_login_days_ago > 60 THEN 'Churn risk (60+ days)'
+    ELSE 'Unknown'
+END AS login_recency_category,
+
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*) * 100,
+        2
+    ) AS churn_rate
+
+FROM customer.subscription.churn_analysis
+GROUP BY plan_type, payment_failures,
+CASE 
+    WHEN payment_failures = 0 THEN 'No failures'
+    WHEN payment_failures = 1 THEN '1 failure'
+    WHEN payment_failures = 2 THEN '2 failures'
+    WHEN payment_failures = 3 THEN '3 failures'
+    WHEN payment_failures = 4 THEN '4 failures'
+    WHEN payment_failures = 5 THEN '5 failures'
+    WHEN payment_failures > 5 THEN '5+ failures'
+    ELSE 'Unknown'
+END , 
+avg_weekly_usage_hours,
+CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+END ,
+CASE 
+    WHEN support_tickets = 0 THEN '0 tickets'
+    WHEN support_tickets = 1 THEN '1 ticket'
+    WHEN support_tickets = 2 THEN '2 tickets'
+    WHEN support_tickets = 3 THEN '3 tickets'
+    WHEN support_tickets = 4 THEN '4 tickets'
+    WHEN support_tickets = 5 THEN '5 tickets'
+    WHEN support_tickets = 6 THEN '6 tickets'
+    WHEN support_tickets = 7 THEN '7 tickets'
+    WHEN support_tickets = 8 THEN '8 tickets'
+    ELSE '9+ tickets' END ,
+CASE 
+    WHEN last_login_days_ago = 0 THEN 'Active today'
+    WHEN last_login_days_ago BETWEEN 1 AND 7 THEN 'Inactive (1-7 days)'
+    WHEN last_login_days_ago BETWEEN 8 AND 14 THEN 'inactive (8-14 days)'
+    WHEN last_login_days_ago BETWEEN 15 AND 30 THEN 'Inactive (15-30 days)'
+    WHEN last_login_days_ago BETWEEN 31 AND 60 THEN 'Inactive (31-60 days)'
+    WHEN last_login_days_ago > 60 THEN 'Churn risk (60+ days)'
+    ELSE 'Unknown'
+END;
+
+
+----------------------------------------------------------------------------------------------------------
+--------churn rate by individual plans
+SELECT
+    plan_type,
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*) * 100,
+        2
+    ) AS churn_rate
+
+FROM customer.subscription.churn_analysis
+GROUP BY plan_type;
+
+
+----------------churn rate by all plans combined
+SELECT
+    plan_type,
+
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_plan
+
+FROM customer.subscription.churn_analysis
+GROUP BY plan_type;
+
+-------------------------churn rate by individual support tickets
+SELECT
+    support_tickets,
+     CASE 
+    WHEN support_tickets = 0 THEN '0 tickets'
+    WHEN support_tickets = 1 THEN '1 ticket'
+    WHEN support_tickets = 2 THEN '2 tickets'
+    WHEN support_tickets = 3 THEN '3 tickets'
+    WHEN support_tickets = 4 THEN '4 tickets'
+    WHEN support_tickets = 5 THEN '5 tickets'
+    WHEN support_tickets = 6 THEN '6 tickets'
+    WHEN support_tickets = 7 THEN '7 tickets'
+    WHEN support_tickets = 8 THEN '8 tickets'
+    ELSE '9+ tickets'
+END AS ticket_category,
+COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*) * 100,
+        2
+    ) AS churn_rate
+
+FROM customer.subscription.churn_analysis
+GROUP BY support_tickets;
+
+
+----------------churn rate by all ticket category combined
+SELECT
+    support_tickets,
+
+    CASE 
+        WHEN support_tickets = 0 THEN '0 tickets'
+        WHEN support_tickets = 1 THEN '1 ticket'
+        WHEN support_tickets = 2 THEN '2 tickets'
+        WHEN support_tickets = 3 THEN '3 tickets'
+        WHEN support_tickets = 4 THEN '4 tickets'
+        WHEN support_tickets = 5 THEN '5 tickets'
+        WHEN support_tickets = 6 THEN '6 tickets'
+        WHEN support_tickets = 7 THEN '7 tickets'
+        WHEN support_tickets = 8 THEN '8 tickets'
+        ELSE '9+ tickets'
+    END AS ticket_category,
+
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_ticket_category
+
+FROM customer.subscription.churn_analysis
+GROUP BY support_tickets
+ORDER BY support_tickets;
+
+--------------------------------churn rate by individual payment failures
+SELECT
+    payment_failures,
+   CASE
+        WHEN payment_failures = 0 THEN 'No failures'
+        WHEN payment_failures = 1 THEN '1 failure'
+        WHEN payment_failures = 2 THEN '2 failures'
+        WHEN payment_failures = 3 THEN '3 failures'
+        WHEN payment_failures = 4 THEN '4 failures'
+        WHEN payment_failures = 5 THEN '5 failures'
+        WHEN payment_failures > 5 THEN '5+ failures'
+        ELSE 'Unknown'
+    END AS payment_failure_category,
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*) * 100,
+        2
+    ) AS churn_rate
+
+FROM customer.subscription.churn_analysis
+GROUP BY payment_failures;
+
+-----------------------------------------------churn rate by the overall payment failures
+SELECT
+    payment_failures,
+
+    CASE
+        WHEN payment_failures = 0 THEN 'No failures'
+        WHEN payment_failures = 1 THEN '1 failure'
+        WHEN payment_failures = 2 THEN '2 failures'
+        WHEN payment_failures = 3 THEN '3 failures'
+        WHEN payment_failures = 4 THEN '4 failures'
+        WHEN payment_failures = 5 THEN '5 failures'
+        WHEN payment_failures > 5 THEN '5+ failures'
+        ELSE 'Unknown'
+    END AS payment_failure_category,
+
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_payment_failures
+
+FROM customer.subscription.churn_analysis
+GROUP BY payment_failures
+ORDER BY payment_failures;
+
+--------------------------------------churn rate by last login days
+SELECT
+    last_login_days_ago,
+CASE 
+    WHEN last_login_days_ago = 0 THEN 'Active today'
+    WHEN last_login_days_ago BETWEEN 1 AND 7 THEN 'Inactive (1-7 days)'
+    WHEN last_login_days_ago BETWEEN 8 AND 14 THEN 'inactive (8-14 days)'
+    WHEN last_login_days_ago BETWEEN 15 AND 30 THEN 'Inactive (15-30 days)'
+    WHEN last_login_days_ago BETWEEN 31 AND 60 THEN 'Inactive (31-60 days)'
+    WHEN last_login_days_ago > 60 THEN 'Churn risk (60+ days)'
+    ELSE 'Unknown'
+END AS login_recency_category,
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*) * 100,
+        2
+    ) AS churn_rate
+
+FROM customer.subscription.churn_analysis
+GROUP BY last_login_days_ago;
+
+-------------------------churn rate by overall logins
+   SELECT
+
+    CASE 
+        WHEN last_login_days_ago = 0 THEN 'Active today'
+        WHEN last_login_days_ago BETWEEN 1 AND 7 THEN 'Inactive (1-7 days)'
+        WHEN last_login_days_ago BETWEEN 8 AND 14 THEN 'Inactive (8-14 days)'
+        WHEN last_login_days_ago BETWEEN 15 AND 30 THEN 'Inactive (15-30 days)'
+        WHEN last_login_days_ago BETWEEN 31 AND 60 THEN 'Inactive (31-60 days)'
+        WHEN last_login_days_ago > 60 THEN 'Churn risk (60+ days)'
+        ELSE 'Unknown'
+    END AS login_recency_category,
+
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_category
+
+FROM customer.subscription.churn_analysis
+
+GROUP BY
+    CASE 
+        WHEN last_login_days_ago = 0 THEN 'Active today'
+        WHEN last_login_days_ago BETWEEN 1 AND 7 THEN 'Inactive (1-7 days)'
+        WHEN last_login_days_ago BETWEEN 8 AND 14 THEN 'Inactive (8-14 days)'
+        WHEN last_login_days_ago BETWEEN 15 AND 30 THEN 'Inactive (15-30 days)'
+        WHEN last_login_days_ago BETWEEN 31 AND 60 THEN 'Inactive (31-60 days)'
+        WHEN last_login_days_ago > 60 THEN 'Churn risk (60+ days)'
+        ELSE 'Unknown'
+    END
+
+ORDER BY churn_percentage_by_category DESC;
+
+------------------churn rate by usage
+select
+    CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+END AS usage_category,
+ COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) / COUNT(*) * 100,
+        2
+    ) AS churn_rate
+
+FROM customer.subscription.churn_analysis
+GROUP BY CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+END;
+-------------------------Churn rate by overall usage category
+SELECT
+    usage_category,
+
+    COUNT(*) AS total_customers,
+
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_usage_category
+
+FROM (
+    SELECT
+        churn,
+        avg_weekly_usage_hours,
+
+        CASE 
+            WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+            WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+            WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+            WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+            WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+            WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+            WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+            WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+            ELSE 'Unknown'
+        END AS usage_category
+
+    FROM customer.subscription.churn_analysis
+) t
+
+GROUP BY usage_category
+ORDER BY churn_percentage_by_usage_category DESC;
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------BELOW ARE THE FINAL CODES----------------------------------------------------------------------------------------------------
+
+
+---------CODE FOR CHURN RATE BY PLAN,SUPPORT TICKETS,PAYMENT FAILURES AND AVG WEEKLY USAGE
+
+SELECT 
+    plan_type,
+
+    /* PLAN ANALYSIS */
+    COUNT(*) AS total_customers,
+     monthname(signup_date) AS signup_Month,
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_plan,
+
+    /* SUPPORT TICKET ANALYSIS */
+    support_tickets,
+
+    CASE 
+        WHEN support_tickets = 0 THEN '0 tickets'
+        WHEN support_tickets = 1 THEN '1 ticket'
+        WHEN support_tickets = 2 THEN '2 tickets'
+        WHEN support_tickets = 3 THEN '3 tickets'
+        WHEN support_tickets = 4 THEN '4 tickets'
+        WHEN support_tickets = 5 THEN '5 tickets'
+        WHEN support_tickets = 6 THEN '6 tickets'
+        WHEN support_tickets = 7 THEN '7 tickets'
+        WHEN support_tickets = 8 THEN '8 tickets'
+        ELSE '9+ tickets'
+    END AS ticket_category,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_ticket_category,
+
+    /* PAYMENT FAILURE ANALYSIS */
+    payment_failures,
+
+    CASE
+        WHEN payment_failures = 0 THEN 'No failures'
+        WHEN payment_failures = 1 THEN '1 failure'
+        WHEN payment_failures = 2 THEN '2 failures'
+        WHEN payment_failures = 3 THEN '3 failures'
+        WHEN payment_failures = 4 THEN '4 failures'
+        WHEN payment_failures = 5 THEN '5 failures'
+        WHEN payment_failures > 5 THEN '5+ failures'
+        ELSE 'Unknown'
+    END AS payment_failure_category,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_payment_failures,
+
+    /* USAGE ANALYSIS */
+    usage_category,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_percentage_by_usage_category
+
+FROM (
+    SELECT
+        plan_type,
+        support_tickets,
+        payment_failures,
+        churn,
+         signup_date,
+
+        CASE 
+            WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+            WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+            WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+            WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+            WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+            WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+            WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+            WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+            ELSE 'Unknown'
+        END AS usage_category
+
+    FROM customer.subscription.churn_analysis
+) t
+
+GROUP BY 
+    plan_type,
+    support_tickets,
+    payment_failures,
+    usage_category,
+    signup_date
+
+ORDER BY 
+    churn_percentage_by_usage_category DESC,
+    usage_category,
+    payment_failures,
+    support_tickets;
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+------------------------------retention rate by plan and tenure months
+SELECT
+    plan_type,
+    monthname(signup_date) AS signup_Month,
+    tenure_months,
+    CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END AS tenure_category,
+
+    COUNT(*) AS total_customers,
+/*
+    SUM(CASE 
+            WHEN churn = 'No' THEN 1 
+            ELSE 0 
+        END) AS retained_customers,
+
+    ROUND(
+        SUM(CASE 
+                WHEN churn = 'No' THEN 1 
+                ELSE 0 
+            END) * 100.0 / COUNT(*),
+        2
+    ) AS retention_rate_percentage,
+    */
+
+ SUM(CASE WHEN churn = 'No' THEN 1 ELSE 0 END) AS Retained,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'No' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'No' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS Retention_rate,
+
+    CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+    END AS usage_category
+
+
+FROM customer.subscription.churn_analysis
+
+GROUP BY
+    plan_type,
+    tenure_months,
+    CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+END ,
+signup_date,
+CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END
+
+ORDER BY
+    plan_type,
+    usage_category,
+    tenure_months;
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-------------------------------------------CUSTOMER COHORTS Analysis
+
+Select monthname(signup_date) AS signup_Month,
+plan_type,
+tenure_months,
+CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END AS tenure_category,
+count(*) As total_customers,
+avg_weekly_usage_hours,
+CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+    END AS usage_category,
+    
+    SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_rate
+
+    from customer.subscription.churn_analysis
+    Where monthname(signup_date) IN ('Jan','Apr','Jul')
+    Group by avg_weekly_usage_hours,monthname(signup_date),tenure_months,usage_category,plan_type,
+    CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+    END,
+    CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END;
+   
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+ ---------------------------------CUSTOMER LIFETIME PATTERNS
+ Select monthname(signup_date) as signup_month,
+ avg_weekly_usage_hours,
+ plan_type,
+ count(*) as total_customer,
+CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+    END AS usage_category,
+    tenure_months,
+    CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END AS tenure_category,
+SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) AS churned,
+
+    ROUND(
+        SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END) * 100.0 /
+        SUM(SUM(CASE WHEN churn = 'Yes' THEN 1 ELSE 0 END)) OVER (),
+        2
+    ) AS churn_rate
+
+from customer.subscription.churn_analysis
+Group by plan_type,avg_weekly_usage_hours,tenure_months,signup_month,signup_date,
+
+CASE 
+    WHEN avg_weekly_usage_hours = 0 THEN 'No usage'
+    WHEN avg_weekly_usage_hours > 0 AND avg_weekly_usage_hours <= 2 THEN 'Very low usage (0-2 hrs)'
+    WHEN avg_weekly_usage_hours > 2 AND avg_weekly_usage_hours <= 5 THEN 'Low usage (2-5 hrs)'
+    WHEN avg_weekly_usage_hours > 5 AND avg_weekly_usage_hours <= 10 THEN 'Moderate usage (5-10 hrs)'
+    WHEN avg_weekly_usage_hours > 10 AND avg_weekly_usage_hours <= 15 THEN 'High usage (10-15 hrs)'
+    WHEN avg_weekly_usage_hours > 15 AND avg_weekly_usage_hours <= 20 THEN 'Very high usage (15-20 hrs)'
+    WHEN avg_weekly_usage_hours > 20 AND avg_weekly_usage_hours <= 25 THEN 'Power users (20-25 hrs)'
+    WHEN avg_weekly_usage_hours > 25 THEN 'Extreme usage (25+ hrs)'
+    ELSE 'Unknown'
+    END ,
+    CASE 
+    WHEN tenure_months BETWEEN 0 AND 3 THEN '0-3 months (New users)'
+    WHEN tenure_months BETWEEN 4 AND 6 THEN '4-6 months (Early stage)'
+    WHEN tenure_months BETWEEN 7 AND 12 THEN '7-12 months (Developing users)'
+    WHEN tenure_months BETWEEN 13 AND 24 THEN '13-24 months (Established users)'
+    WHEN tenure_months BETWEEN 25 AND 36 THEN '25-36 months (Loyal users)'
+    WHEN tenure_months > 36 THEN '36+ months (Long-term users)'
+    ELSE 'Unknown'
+END;
